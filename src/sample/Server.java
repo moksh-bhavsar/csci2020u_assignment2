@@ -2,42 +2,39 @@ package sample;
 
 import java.io.*;
 import java.net.*;
+import java.util.Vector;
 
-public class Server extends Thread{
-    private ServerSocket serverSocket = null;
-    private final int port;
-    private static final File sharedDir = new File("F:\\Software_Sys_Dev_Int\\csci2020u_assignment2\\sharedDir");
+public class Server {
+    protected Socket clientSocket           = null;
+    protected ServerSocket serverSocket     = null;
+    protected Main.ServerHandler[] threads    = null;
+    protected int numClients                = 0;
+    protected Vector messages               = new Vector();
 
-    public Server(int port) throws IOException {
-        this.serverSocket = new ServerSocket(port);
-        this.port = port;
-    }
+    public static int SERVER_PORT = 16789;
+    public static int MAX_CLIENTS = 25;
 
-    public void handleRequests(File file) throws IOException {
-        System.out.printf("Listening to port: %d\n", this.port);
-
-        while(true){
-            Socket clientSocket = serverSocket.accept();
-            System.out.printf("Connected to %s:%d\n", clientSocket.getLocalAddress().toString(),clientSocket.getPort());
-            InputStreamReader inStream = new InputStreamReader(clientSocket.getInputStream());
-            BufferedReader in = new BufferedReader(inStream);
-            String request = in.readLine();
-            System.out.println("Command: " + request);
-            HttpServerHandler handler = new HttpServerHandler(clientSocket, file);
-            Thread handlerThread = new Thread(handler);
-            handlerThread.start();
-            clientSocket.close();
+    public Server() {
+        try {
+            serverSocket = new ServerSocket(SERVER_PORT);
+            System.out.println("---------------------------");
+            System.out.println("Chat Server Application is running");
+            System.out.println("---------------------------");
+            System.out.println("Listening to port: "+SERVER_PORT);
+            threads = new Main.ServerHandler[MAX_CLIENTS];
+            while(true) {
+                clientSocket = serverSocket.accept();
+                System.out.println("Client #"+(numClients+1)+" connected.");
+                threads[numClients] = new Main.ServerHandler(clientSocket, messages);
+                threads[numClients].start();
+                numClients++;
+            }
+        } catch (IOException e) {
+            System.err.println("IOException while creating server connection");
         }
     }
 
     public static void main(String[] args) {
-        int port = 8080;
-
-        try{
-            Server server = new Server(port);
-            server.handleRequests(sharedDir);
-        }catch (IOException e){
-            e.printStackTrace();
-        }
+        Server app = new Server();
     }
 }
