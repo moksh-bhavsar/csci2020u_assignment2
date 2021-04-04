@@ -1,0 +1,1 @@
+This is an example of text document used to test the "DIR" command for assignment-2.
